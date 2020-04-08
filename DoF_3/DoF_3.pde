@@ -1,4 +1,4 @@
-/* This simple scene model present a quick 3D scene and a depth buffer copy 
+/* Hexagonal dof from : https://www.shadertoy.com/view/4tK3WK
  */
 import fpstracker.core.*;
 import gpuimage.core.*;
@@ -31,7 +31,7 @@ public void setup() {
   endPGL();
 
   filter = new Filter(this, albedo.width, albedo.height);
-  sse = loadIncludeFragment(this, dataPath+"dof-2.glsl", true);
+  sse = loadIncludeFragment(this, dataPath+"dof-3.glsl", true);
   sse.set("bluenoise", loadImage(dataPath+"blueNoise/1024_1024/LDR_RGBA_0.png"));
 
   pt = new PerfTracker(this, 120);
@@ -43,8 +43,11 @@ public void draw() {
   float nmy = norm(mouseY, 0, height);
 
   albedo.beginDraw();
-  albedo.lights();
   albedo.background(0);
+  //albedo.lights();
+  albedo.ambientLight(50, 50, 50);
+  albedo.lightSpecular(255, 255, 255);
+  albedo.directionalLight(204, 204, 204, 0, 0, -1);
 
   albedo.fill(255, 0, 0);
   albedo.noStroke();
@@ -56,6 +59,8 @@ public void draw() {
     albedo.rotateX(sin(Time.time*0.00075f + i));
     albedo.rotateZ(sin(Time.time*0.0005f + i));
     albedo.fill(random(120, 255), random(120, 255), random(120, 255));
+    albedo.specular(255, 255, 255);
+    albedo.shininess(random(1, 100));
     albedo.sphere(100 * 0.5);
     albedo.box(150 * 0.5);
     albedo.popMatrix();
@@ -69,10 +74,10 @@ public void draw() {
 
   sse.set("depthmap", depth);
   sse.set("mouse", nmx, nmy);
-  sse.set("near", 100.0);
+  sse.set("near", 10.0);
   sse.set("far", 400.0);
-  sse.set("focusPoint", 350.0);
-  sse.set("scale", 700.0);
+  sse.set("focusPoint", 300.0 * 0.45);
+  sse.set("scale", 250 * 0.5);
   sse.set("resolution", (float)depth.width, (float)depth.height);
   filter.getCustomFilter(albedo, sse);
 
@@ -93,6 +98,6 @@ void keyPressed() {
   case 'S' : 
   case 's' :
     filter.getBuffer().save("DoF2.png");
-  break;
+    break;
   }
 }

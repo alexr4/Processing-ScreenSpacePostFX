@@ -48,14 +48,16 @@ public void draw() {
 
   albedo.fill(255, 0, 0);
   albedo.noStroke();
-  int numSpheres = 8;
+  int numSpheres = 20;
+  randomSeed(1000);
   for (int i=0; i< numSpheres; i++) {
     albedo.pushMatrix();
     albedo.translate(width * i /(float)numSpheres, height/2 + 100*sin(Time.time*0.00075f + i), -400 * sin(Time.time*0.0005f + i) );
     albedo.rotateX(sin(Time.time*0.00075f + i));
     albedo.rotateZ(sin(Time.time*0.0005f + i));
-    albedo.sphere(100);
-    albedo.box(150);
+    albedo.fill(random(120, 255), random(120, 255), random(120, 255));
+    albedo.sphere(100* 0.5);
+    albedo.box(150 * 0.5);
     albedo.popMatrix();
   }
 
