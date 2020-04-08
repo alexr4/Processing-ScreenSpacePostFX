@@ -15,8 +15,9 @@ public PShader loadIncludeVertex(PApplet p5, String file, boolean saveCompiled, 
 }
 
 public PShader loadIncludeShader(PApplet p5, String vertFile, String fragFile, boolean saveCompiled, ArrayList<String>... stringsToInsertInVertFrag){
-    String[] vert = loadSourceShader(p5, vertFile, stringsToInsertInVertFrag[0]);
-    String[] frag = loadSourceShader(p5, fragFile, stringsToInsertInVertFrag[1]);
+    println(stringsToInsertInVertFrag[0]);
+    String[] vert = (stringsToInsertInVertFrag.length >= 2) ? loadSourceShader(p5, vertFile, stringsToInsertInVertFrag[0]) : loadSourceShader(p5, vertFile);
+    String[] frag = (stringsToInsertInVertFrag.length >= 2) ? loadSourceShader(p5, fragFile, stringsToInsertInVertFrag[1]) : loadSourceShader(p5, fragFile);
     if(saveCompiled){
         saveStrings(dataPath("")+"/compiledVert.glsl", vert);
         saveStrings(dataPath("")+"/compiledFrag.glsl", frag);

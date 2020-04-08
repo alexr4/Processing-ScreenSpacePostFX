@@ -8,19 +8,19 @@ void copyDepthToDepthFBO(PGraphics b){
   b.endPGL();
 }
 
-void bindDepthBuffer(PJOGL pjogl, PShader shader, String uniformID){
+void bindDepthBuffer(PJOGL pjogl, PShader shader){
   int textureID = depthfbo.getDepthTexture()[0];
   int textureUnit = PGL.TEXTURE2;
   pjogl.activeTexture(textureUnit);
   pjogl.bindTexture(PGL.TEXTURE_2D, textureID);
-  shader.set(uniformID, textureID);
+  shader.set("depthTexture", textureID);
 }
 
 void computeDepthDebugBuffer(PGraphics b){
   b.beginDraw();
   PGL pgl = b.beginPGL();
   PJOGL  pjogl = ((PJOGL)pgl);
-  bindDepthBuffer(pjogl, depthviewer, "depthTexture");
+  bindDepthBuffer(pjogl, depthviewer);
   b.endPGL();
 
   b.background(0);

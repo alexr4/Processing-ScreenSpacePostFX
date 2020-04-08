@@ -5,9 +5,8 @@ import gpuimage.core.*;
 
 PerfTracker pt;
 
-Filter passfog;
-Filter passssms;
-PShader ssmse, foge;
+Filter filter;
+PShader sse;
 
 PVector lightDir;
 PShader scenesh;
@@ -24,7 +23,7 @@ public void setup() {
   surface.setLocation(1920/2 - width/2, -1080 + 100);
 
   String dataPath = sketchPath("../data/");
-  String fogType = "#define FOGTYPE 1";
+  String fogType = "#define FOGTYPE 2";
   ArrayList paramsVert = new ArrayList<String>();
   ArrayList paramsFrag = new ArrayList<String>();
   paramsVert.add("");
@@ -40,10 +39,8 @@ public void setup() {
   depthfbo = new CustomFrameBuffer(gl, albedo.width, albedo.height);
   endPGL();
 
-  passfog = new Filter(this, albedo.width, albedo.height);
-  passssms = new Filter(this, albedo.width, albedo.height);
-  foge = loadIncludeFragment(this, dataPath+"ssfog.glsl", false, paramsFrag);
-  ssmse = loadIncludeFragment(this, dataPath+"ssms.glsl", false, paramsFrag);
+  filter = new Filter(this, albedo.width, albedo.height);
+  sse = loadIncludeFragment(this, dataPath+"ssfog.glsl", false, paramsFrag);
 
   Time.setStartTime(this);
   pt = new PerfTracker(this, 120);
@@ -59,8 +56,8 @@ public void draw() {
   lightDir.set(sin(lightAngle), 0, cos(lightAngle));
 
   PVector fogColor = new PVector(0.9137, 0.9608, 0.9882);
-  float near = 500.0 * 0.5;
-  float maxFar = 600.0;
+  float near = 500.0 * 1.0;
+  float maxFar = 2500.0;
   float far = (maxFar - near) * 0.25 + near;
   
 
@@ -99,36 +96,18 @@ public void draw() {
   PMatrix3D projmat = ((PGraphicsOpenGL)albedo).projection;
   PMatrix3D modelview = ((PGraphicsOpenGL)albedo).modelviewInv;
   
-  foge.set("projmat", projmat);
-  foge.set("mv", modelview);
-  foge.set("depthmap", depth);
-  foge.set("near", near);
-  foge.set("far", far);
-  foge.set("fogColor", fogColor);
-  foge.set("sunDir", lightDir);
-  foge.set("fogDensity", 0.45 * 0.01);
-  foge.set("mouse", nmx, nmy);
+  sse.set("projmat", projmat);
+  sse.set("mv", modelview);
+  sse.set("depthmap", depth);
+  sse.set("near", near);
+  sse.set("far", far);
+  sse.set("fogColor", fogColor);
+  sse.set("sunDir", lightDir);
+  sse.set("fogDensity", nmx * 0.01);
+  sse.set("mouse", nmx, nmy);
 
-  passfog.getCustomFilter(albedo, foge);
-  
-  
-  ssmse.set("projmat", projmat);
-  ssmse.set("mv", modelview);
-  ssmse.set("depthmap", depth);
-  foge.set("near", near);
-  ssmse.set("far", far);
-  ssmse.set("fogColor", fogColor);
-  ssmse.set("sunDir", lightDir);
-  ssmse.set("fogDensity", 0.45 * 0.01);
-  ssmse.set("mouse", nmx, nmy);
-  ssmse.set("blurDir", 1.0, 0.0);
-  ssmse.set("resolution", (float)width, (float)height);
-  
-  passssms.getCustomFilter(passfog.getBuffer(), ssmse);
-  ssmse.set("blurDir", 0.0, 1.0);
-  passssms.getCustomFilter(passssms.getBuffer(), ssmse);
-  
-  image(passssms.getBuffer(), 0, 0);
+  filter.getCustomFilter(albedo, sse);
+  image(filter.getBuffer(), 0, 0);
   //image(albedo, 0, 0);
 
   //debug
@@ -136,7 +115,6 @@ public void draw() {
   float scale = 0.15;
   image(albedo, 0, height - albedo.height*scale, albedo.width*scale, albedo.height*scale);
   image(depth, albedo.width*scale, height - albedo.height*scale, albedo.width*scale, albedo.height*scale);
-  image(passfog.getBuffer(), albedo.width*scale * 2.0, height - albedo.height*scale, albedo.width*scale, albedo.height*scale);
 }
 
 void keyPressed() {
