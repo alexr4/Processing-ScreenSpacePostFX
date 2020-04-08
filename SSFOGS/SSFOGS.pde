@@ -23,7 +23,7 @@ public void setup() {
   surface.setLocation(1920/2 - width/2, -1080 + 100);
 
   String dataPath = sketchPath("../data/");
-  String fogType = "#define FOGTYPE 2";
+  String fogType = "#define FOGTYPE 0";
   ArrayList paramsVert = new ArrayList<String>();
   ArrayList paramsFrag = new ArrayList<String>();
   paramsVert.add("");
@@ -53,17 +53,26 @@ public void draw() {
 
   float lightAngle = Time.time * 0.001;
   float lfar = 750;
-  lightDir.set(sin(lightAngle), 0, cos(lightAngle));
+  lightDir.set(sin(lightAngle), nmx * 2.0 - 1.0, cos(lightAngle));
 
   PVector fogColor = new PVector(0.9137, 0.9608, 0.9882);
   float near = 500.0 * 1.0;
   float maxFar = 2500.0;
   float far = (maxFar - near) * 0.25 + near;
-  
+
 
   albedo.beginDraw();
   albedo.shader(scenesh);
-  albedo.background(fogColor.x * 255.0, fogColor.y * 255.0, fogColor.z * 255.0);
+  albedo.background(fogColor.x * 255.0, fogColor.y * 255.0, fogColor.z * 255.0); 
+
+  albedo.pushMatrix();
+  albedo.translate(width/2, height/2);
+  albedo.fill(fogColor.x * 255.0, fogColor.y * 255.0, fogColor.z * 255.0);
+  albedo.stroke(0);
+  albedo.sphere(750);
+  albedo.line(0, 0, 0, lightDir.x * 100, lightDir.y * 100, lightDir.z * 100);
+  albedo.popMatrix();
+
   albedo.lightFalloff(0.5, 0.001, 0.0);
   albedo.ambientLight(255/2.5, 255/2.5, 255/2.5, 0, 0, 0);
   albedo.pointLight(0.9882 * 255 * 0.5, 0.9529 * 255 * 0.5, 0.9137 * 255 * 0.5, 0, height/2, 1500);
@@ -92,12 +101,12 @@ public void draw() {
   albedo.endDraw();
 
   computeDepthDebugBuffer(depth);
-  
+
   PMatrix3D projmat = ((PGraphicsOpenGL)albedo).projection;
-  PMatrix3D modelview = ((PGraphicsOpenGL)albedo).modelviewInv;
-  
+  //PMatrix3D modelview = ((PGraphicsOpenGL)albedo).modelviewInv;
+
   sse.set("projmat", projmat);
-  sse.set("mv", modelview);
+  //sse.set("mv", modelview);
   sse.set("depthmap", depth);
   sse.set("near", near);
   sse.set("far", far);
@@ -105,6 +114,7 @@ public void draw() {
   sse.set("sunDir", lightDir);
   sse.set("fogDensity", nmx * 0.01);
   sse.set("mouse", nmx, nmy);
+  sse.set("resolution", (float)albedo.width, (float)albedo.height);
 
   filter.getCustomFilter(albedo, sse);
   image(filter.getBuffer(), 0, 0);

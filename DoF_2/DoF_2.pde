@@ -17,6 +17,7 @@ boolean pause = true;
 
 public void setup() {
   size(800, 800, P3D);
+  surface.setLocation(1920/2 - width/2, -1080 + 20);
 
   String dataPath = sketchPath("../data/");
 

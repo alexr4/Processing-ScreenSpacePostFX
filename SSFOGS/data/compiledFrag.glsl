@@ -3,7 +3,7 @@
   www.bonjour-lab.com
 */
 #version 150
-#define FOGTYPE 2
+#define FOGTYPE 0
 #ifdef GL_ES
 precision mediump float;
 precision mediump int;

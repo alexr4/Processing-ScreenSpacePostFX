@@ -30,7 +30,7 @@ float ldepth(in float d){
 float getBlurSize(float depth, float focusPoint, float focusScale)
 {
 	float coc = clamp((1.0 / focusPoint - 1.0 / depth)*focusScale, -1.0, 1.0);
-	return abs(coc);//abs(coc) * MAX_BLUR_SIZE;
+	return abs(coc);
 }
 
 vec3 depthOfField(vec2 texCoord, float focusPoint, float focusScale)

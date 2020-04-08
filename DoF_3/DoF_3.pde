@@ -17,6 +17,7 @@ boolean pause = true;
 
 public void setup() {
   size(800, 800, P3D);
+  surface.setLocation(1920/2 - width/2, -1080 + 20);
 
   String dataPath = sketchPath("../data/");
 
@@ -44,10 +45,10 @@ public void draw() {
 
   albedo.beginDraw();
   albedo.background(0);
-  //albedo.lights();
-  albedo.ambientLight(50, 50, 50);
-  albedo.lightSpecular(255, 255, 255);
-  albedo.directionalLight(204, 204, 204, 0, 0, -1);
+  albedo.lights();
+  //albedo.ambientLight(50, 50, 50);
+  //albedo.lightSpecular(255, 255, 255);
+  //albedo.directionalLight(204, 204, 204, 0, 0, -1);
 
   albedo.fill(255, 0, 0);
   albedo.noStroke();
@@ -59,8 +60,8 @@ public void draw() {
     albedo.rotateX(sin(Time.time*0.00075f + i));
     albedo.rotateZ(sin(Time.time*0.0005f + i));
     albedo.fill(random(120, 255), random(120, 255), random(120, 255));
-    albedo.specular(255, 255, 255);
-    albedo.shininess(random(1, 100));
+    //albedo.specular(255, 255, 255);
+    //albedo.shininess(random(1, 100));
     albedo.sphere(100 * 0.5);
     albedo.box(150 * 0.5);
     albedo.popMatrix();

@@ -16,6 +16,7 @@ uniform float near = 10.0;
 uniform float far = 400.0;
 uniform vec3 sunDir;
 uniform vec2 mouse;
+uniform vec2 resolution;
 
 
 in vec4 vertTexCoord;
@@ -31,10 +32,11 @@ vec3 reconstructPosition(in float z, in vec2 uv, mat4 projmat, mat4 mv)
 {
     float x = uv.x * 2.0f - 1.0f;
     float y = (1.0 - uv.y) * 2.0f - 1.0f;
-    vec4 position_s = vec4(x, y, z, 1.0f);
+    z = z * 2.0 - 1.0;
+    vec4 position_s = vec4(x, y, z * (far-near) + near, 1.0f);
     vec4 position_v = projmat * position_s;
     vec4 P = position_v / position_v.w;
-    vec4 worldPosition = mv * P;
+    // vec4 worldPosition = mv * P;
 
     return position_v.xyz;
 }
@@ -45,12 +47,12 @@ void main(){
 	vec2 uv = vertTexCoord.xy;
     vec4 albedo = texture2D(texture, uv);
 
-    float depth = texture2D(depthmap, uv).r * far;
+    float depth = texture2D(depthmap, uv).r;// * far;
     vec3 ecVertex = reconstructPosition(depth, uv, (projmat), mv);
 
     float dist = length(ecVertex);
     float fogFactor;
-    float sunAmount = max(dot(-ecVertex.xyz / far, sunDir), 0.0);
+    float sunAmount = max(dot(normalize(ecVertex.xyz), sunDir), 0.0);
     vec3 scatteringSun = mix(fogColor, sunColor, pow(sunAmount, 10.0));
     vec3 finalColor;
 
@@ -72,5 +74,6 @@ void main(){
         finalColor = albedo.rgb * (ext) + scatteringSun * (1.0 - insc);
     }
 
-	fragColor = vec4(finalColor, 1.0);
+
+	fragColor = vec4(vec3(finalColor), 1.0);
 }
