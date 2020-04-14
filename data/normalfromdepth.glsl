@@ -12,8 +12,8 @@ in vec4 vertTexCoord;
 out vec4 fragColor;
 
 vec3 getNormal(float depth, vec2 uv){
-	vec2 offsety = vec2(0.0, mouse.x);
-	vec2 offsetx = vec2(mouse.x, 0.0);
+	vec2 offsety = vec2(0.0, 0.01);
+	vec2 offsetx = vec2(0.01, 0.0);
 
 	float depthoy = texture2D(texture, uv + offsety).r;
 	float depthox = texture2D(texture, uv + offsetx).r;

@@ -3,11 +3,13 @@
   www.bonjour-lab.com
 */
 #version 150
-#define FOGTYPE 1
+#define FOGTYPE 0
 #ifdef GL_ES
 precision mediump float;
 precision mediump int;
 #endif
+
+uniform float far;
 
 uniform bool textureMode;
 
@@ -145,5 +147,7 @@ void main() {
                     vec4(vemissive.rgb, 0.0);
 
 
-  fragColor = texColor * (gl_FrontFacing ? AlbedoFront : AlbedoBack);
+  vec2 uv = gl_FragCoord.xy/vec2(800) * 2.0 - 1.0;
+  vec3 ecTest = vec3(uv, 0.0);
+  fragColor = texColor * (gl_FrontFacing ? AlbedoFront : AlbedoBack);//vec4(ecVertex.xyz, 1.0);//vec4(ecVertex.xyz, 1.0);//
 }

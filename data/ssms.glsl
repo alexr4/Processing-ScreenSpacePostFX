@@ -1,66 +1,69 @@
 //non linearized depth
 #version 150
 #ifdef GL_ES
-precision mediump float;
-precision mediump int;
+precision highp float;
+precision highp int;
 #endif
 
 uniform mat4 projmat;
-uniform mat4 mv;
 uniform sampler2D texture;
 uniform sampler2D depthmap;
-uniform vec3 fogColor = vec3(0.9137, 0.9608, 0.9882);
-uniform vec3 sunColor = vec3(1.0, 0.9, 0.7);// yellowish
+uniform sampler2D ramp;
 uniform float fogDensity = 0.0005;
 uniform float near = 10.0;
 uniform float far = 400.0;
-uniform vec3 sunDir;
-uniform vec2 blurDir;
 uniform vec2 mouse;
+uniform vec2 blurDir;
 uniform vec2 resolution;
-
 
 in vec4 vertTexCoord;
 out vec4 fragColor;
 
-#include ../data/gaussianblur13x13.glsl
+#include ../data/gaussianblur.glsl
 
-float ldepth(in float d){
-	float nd = (2.0 * near) / (far + near - d * (far - near));
-	return nd;
-}
 
-vec3 reconstructPosition(in float z, in vec2 uv, mat4 projmat, mat4 mv)
+vec3 reconstructPosition(in float z, in vec2 uv, mat4 projmat)
 {
-    float x = uv.x * 2.0f - 1.0f;
-    float y = (1.0 - uv.y) * 2.0f - 1.0f;
-    vec4 position_s = vec4(x, y, z, 1.0f);
-    vec4 position_v = projmat * position_s;
-    vec4 P = position_v / position_v.w;
-    vec4 worldPosition = mv * P;
+//from https://stackoverflow.com/questions/11277501/how-to-recover-view-space-position-given-view-space-depth-value-and-ndc-xy
+    mat4 inversePrjMat = inverse(projmat);
+    vec4 viewPosH      = inversePrjMat * vec4(uv.x, uv.y,  z * 2.0 - 1.0, 1.0 );
+    vec3 viewPos       = viewPosH.xyz / viewPosH.w;
 
-    return position_v.xyz;
+    return viewPos;
 }
-
 
 
 void main(){
 	vec2 uv = vertTexCoord.xy;
     vec4 albedo = texture2D(texture, uv);
 
-    float depth = texture2D(depthmap, uv).r * far;
-    vec3 ecVertex = reconstructPosition(depth, uv, projmat, mv);
+    float depth = texture2D(depthmap, uv).r;
+    vec3 ecVertex = reconstructPosition(depth, vertTexCoord.xy * 2.0 - 1.0, projmat);
 
     float dist = length(ecVertex);
-    
-    float fogFactor = (far - dist) / (far - near);
-    fogFactor = 1.0 - clamp(fogFactor, 0.0, 1.0);
+    float fogFactor;
 
-    float focusDistance = 0.875;
-    float focusScale = 0.05;
-    float inscattring =  smoothstep(focusDistance, focusDistance +focusScale,  fogFactor);
-    // float stepper = 0.0001 + smoothstep(0.35, 0.5, fogFactor);
-    vec3 finalColor = getBlur(uv, texture, inscattring * 25.0, blurDir.x >= 1.0 ? 1.0 / resolution.x : 1.0 / resolution.y , blurDir);
+    vec3 finalColor;
 
-	fragColor = vec4(inscattring * finalColor, 1.0);
+    if(FOGTYPE == 0){ //linear
+        fogFactor = (far - dist) / (far - near);
+        fogFactor = 1.0 - clamp(fogFactor, 0.0, 1.0);
+
+    }else if(FOGTYPE == 1){//exponential
+        fogFactor = exp(-dist * fogDensity);
+        fogFactor = 1.0 - clamp(fogFactor, 0.0, 1.0);
+
+    }else if(FOGTYPE == 2){
+        float be = 0.0025; //extinction
+        float bi = 0.002; //inscattring
+        float ext = exp(-dist * be);
+        float insc = exp(-dist * bi);
+        fogFactor = ext + (1.0 - insc);
+        fogFactor = 1.0 - clamp(fogFactor, 0.0, 1.0);
+    }
+
+    finalColor =  getBlur9x9(uv, texture, fogFactor * 5.0, blurDir.x >= 1.0 ? 1.0 / resolution.x : 1.0 / resolution.y , blurDir);
+	finalColor = clamp(finalColor, vec3(0.0), vec3(1.0));
+    finalColor = albedo.rgb * (1.0 - fogFactor) + finalColor * fogFactor;
+    fragColor = vec4(vec3(finalColor), 1.0);
 }

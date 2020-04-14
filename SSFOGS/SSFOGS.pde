@@ -7,6 +7,7 @@ PerfTracker pt;
 
 Filter filter;
 PShader sse;
+PImage ramp;
 
 PVector lightDir;
 PShader scenesh;
@@ -20,10 +21,10 @@ boolean pause = false;
 public void setup() {
   size(800, 800, P3D);
 
-  surface.setLocation(1920/2 - width/2, -1080 + 100);
+  surface.setLocation(1920/2 - width/2, -0 + 100);
 
   String dataPath = sketchPath("../data/");
-  String fogType = "#define FOGTYPE 0";
+  String fogType = "#define FOGTYPE 2";
   ArrayList paramsVert = new ArrayList<String>();
   ArrayList paramsFrag = new ArrayList<String>();
   paramsVert.add("");
@@ -41,6 +42,8 @@ public void setup() {
 
   filter = new Filter(this, albedo.width, albedo.height);
   sse = loadIncludeFragment(this, dataPath+"ssfog.glsl", false, paramsFrag);
+  ramp = loadImage(dataPath+"ramp.png");
+  sse.set("ramp", ramp);
 
   Time.setStartTime(this);
   pt = new PerfTracker(this, 120);
@@ -53,7 +56,7 @@ public void draw() {
 
   float lightAngle = Time.time * 0.001;
   float lfar = 750;
-  lightDir.set(sin(lightAngle), nmx * 2.0 - 1.0, cos(lightAngle));
+  lightDir.set(sin(lightAngle), 0.0, cos(lightAngle));
 
   PVector fogColor = new PVector(0.9137, 0.9608, 0.9882);
   float near = 500.0 * 1.0;
@@ -103,9 +106,19 @@ public void draw() {
   computeDepthDebugBuffer(depth);
 
   PMatrix3D projmat = ((PGraphicsOpenGL)albedo).projection;
-  //PMatrix3D modelview = ((PGraphicsOpenGL)albedo).modelviewInv;
+  //PMatrix3D projmat = ((PGraphicsOpenGL)albedo).modelviewInv;
+  //PMatrix3D projmat = ((PGraphicsOpenGL)albedo).modelview;
+  //PMatrix3D projmat = ((PGraphicsOpenGL)albedo).camera ;
+  //PMatrix3D projmat = ((PGraphicsOpenGL)albedo).cameraInv;
+  //PMatrix3D projmat = ((PGraphicsOpenGL)albedo).projmodelview;
 
-  sse.set("projmat", projmat);
+  //sse.set("projmat", projmat);
+   sse.set("projmat", new PMatrix3D(
+    projmat.m00, projmat.m10, projmat.m20, projmat.m30, 
+    projmat.m01, projmat.m11, projmat.m21, projmat.m31, 
+    projmat.m02, projmat.m12, projmat.m22, projmat.m32, 
+    projmat.m03, projmat.m13, projmat.m23, projmat.m33
+    ));
   //sse.set("mv", modelview);
   sse.set("depthmap", depth);
   sse.set("near", near);
@@ -114,7 +127,6 @@ public void draw() {
   sse.set("sunDir", lightDir);
   sse.set("fogDensity", nmx * 0.01);
   sse.set("mouse", nmx, nmy);
-  sse.set("resolution", (float)albedo.width, (float)albedo.height);
 
   filter.getCustomFilter(albedo, sse);
   image(filter.getBuffer(), 0, 0);
