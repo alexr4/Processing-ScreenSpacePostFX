@@ -43,7 +43,7 @@ void main(){
     float fogFactor;
     float sunAmount = max(dot(normalize(ecVertex.xyz), sunDir), 0.0);
     //use this if you want to use a ramp instead of colors
-    //vec3 scatteringSun = texture2D(ramp, vec2(pow(sunAmount, 25.0), 0.5)).rgb;
+    // vec3 scatteringSun = texture2D(ramp, vec2(pow(sunAmount, 25.0), 0.5)).rgb;
     vec3 scatteringSun = mix(fogColor, sunColor, pow(sunAmount, 15.0));
 
     vec3 finalColor;
@@ -55,9 +55,9 @@ void main(){
         finalColor = mix(albedo.rgb, scatteringSun, fogFactor);
     }else if(FOGTYPE == 1){//exponential
         fogFactor = exp(-dist * fogDensity);
-        fogFactor = clamp(fogFactor, 0.0, 1.0);
+        fogFactor = 1.0 - clamp(fogFactor, 0.0, 1.0);
 
-        finalColor = mix(albedo.rgb, scatteringSun, 1.0 - fogFactor);
+        finalColor = mix(albedo.rgb, scatteringSun, fogFactor);
     }else if(FOGTYPE == 2){
         float be = 0.0025; //extinction
         float bi = 0.002; //inscattring

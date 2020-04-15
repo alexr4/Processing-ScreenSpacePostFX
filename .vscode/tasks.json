@@ -24,7 +24,7 @@
         "windows": {
           "args": [
             "--force",
-            "--sketch=${workspaceRoot}/ComputeShader/FlowerComputeShader",
+            "--sketch=${workspaceRoot}/GodRay",
             "--output=${workspaceRoot}\\_OUT",
             "--run"
           ]

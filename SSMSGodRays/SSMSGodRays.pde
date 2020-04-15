@@ -5,14 +5,16 @@ import gpuimage.core.*;
 
 PerfTracker pt;
 
-Filter filter, ssmsf;
-PShader sse, ssms;
+Filter filter, ssmsf, grFilter;
+Compositor comp;
+PShader sse, ssms, occluder, godrays;
 PImage ramp;
 
 PVector lightDir;
 PShader scenesh;
 PGraphics albedo;
 PGraphics depth;
+PGraphics lights;
 PShader depthviewer;
 CustomFrameBuffer depthfbo;
 
@@ -33,6 +35,7 @@ public void setup() {
   lightDir = new PVector();
   albedo = createGraphics(width, height, P3D);
   depth = createGraphics(albedo.width, albedo.height, P3D); 
+  lights = createGraphics(albedo.width, albedo.height, P3D); 
   depthviewer = loadShader(dataPath+"depthViewer.glsl");
 
   PGL pgl = beginPGL();
@@ -42,8 +45,13 @@ public void setup() {
 
   filter = new Filter(this, albedo.width, albedo.height);
   ssmsf = new Filter(this, albedo.width, albedo.height);
+  grFilter =  new Filter(this, albedo.width, albedo.height);
+  comp = new Compositor(this,  albedo.width, albedo.height);
   sse = loadIncludeFragment(this, dataPath+"ssfog-2.glsl", false, paramsFrag);
   ssms = loadIncludeFragment(this, dataPath+"ssms-2.glsl", false, paramsFrag);
+  occluder = loadIncludeFragment(this, dataPath+"depthOccluder.glsl", false);
+  godrays = loadIncludeFragment(this, dataPath+"godrays.glsl", false);
+
   ramp = loadImage(dataPath+"ramp.png");
   sse.set("ramp", ramp);
 
@@ -56,13 +64,31 @@ public void draw() {
   float nmx = norm(mouseX, 0, width);
   float nmy = norm(mouseY, 0, height);
 
-  float lightAngle = Time.time * 0.001;
-  float lfar = 750;
+  float lightAngle = Time.time * 0.0005;
+  
+  float near = 250.0;
+  float maxFar = 1600.0;
+  float far = (maxFar - near) * 0.5 + near;
+  //float C = projmat.m22;
+  //float D = projmat.m23;
+  //float znear = D / (C -1f);
+  //float zfar = D / (C + 1f);
   lightDir.set(sin(lightAngle), nmx * 2.0 - 1.0, cos(lightAngle));
 
   PVector fogMaxColor = new PVector(0.9137, 0.9608, 0.9882);
   PVector fogMinColor = new PVector(0.7255, 0.7843, 0.8196);
- 
+
+   PVector sunPosition = lightDir.copy().mult(far);
+  float sunSize = 150.0;
+  lights.beginDraw();
+  lights.background(0);
+  lights.translate(lights.width/2, lights.height/2);
+  lights.translate(sunPosition.x, sunPosition.y, sunPosition.z);
+  lights.noLights();
+  lights.fill(255);
+  lights.noStroke();
+  lights.sphere(sunSize);
+  lights.endDraw();
 
   albedo.beginDraw();
   albedo.shader(scenesh);
@@ -105,13 +131,6 @@ public void draw() {
 
   PMatrix3D projmat = ((PGraphicsOpenGL)albedo).projection;
   
-  float near = 250.0;
-  float maxFar = 1600.0;
-  float far = (maxFar - near) * 0.5 + near;
-  //float C = projmat.m22;
-  //float D = projmat.m23;
-  //float znear = D / (C -1f);
-  //float zfar = D / (C + 1f);
 
   //sse.set("projmat", projmat);
   sse.set("projmat", new PMatrix3D(
@@ -133,6 +152,29 @@ public void draw() {
 
   filter.getCustomFilter(albedo, sse);
 
+   //godrays pass-1 occludes from depth
+  occluder.set("depthmap", depth);
+  occluder.set("near", near);
+  occluder.set("far", far);
+  occluder.set("farOcclusion", far);
+  grFilter.getCustomFilter(lights, occluder);
+
+  godrays.set("lightPosition", albedo.screenX(sunPosition.x + albedo.width/2.0, sunPosition.y+albedo.height/2, sunPosition.z)/(float)albedo.width, 
+                           albedo.screenY(sunPosition.x + albedo.width/2.0, sunPosition.y+albedo.height/2, sunPosition.z)/(float)albedo.height,
+                           albedo.screenZ(sunPosition.x + albedo.width/2.0, sunPosition.y+albedo.height/2, sunPosition.z));
+  godrays.set("resolution", (float)albedo.width, (float)albedo.height);
+
+//godrays pass-2 Radial blur
+  godrays.set("decay", 0.945);
+  godrays.set("density", 1.0);//0.5);//0.75);
+  godrays.set("weight", 0.05);//0.25);//1.0);
+  godrays.set("exposure", 1.0);//1.0);
+  godrays.set("minSunDisk", 0.25);//0.65);//1.0);
+  godrays.set("mouse", nmx, nmy);//1.0);
+  grFilter.getCustomFilter(grFilter.getBuffer(), godrays);
+
+  comp.getBlendAdd(grFilter.getBuffer(), filter.getBuffer(), 100.0); //add
+
   ssms.set("projmat", new PMatrix3D(
     projmat.m00, projmat.m10, projmat.m20, projmat.m30, 
     projmat.m01, projmat.m11, projmat.m21, projmat.m31, 
@@ -147,6 +189,7 @@ public void draw() {
   ssms.set("resolution", (float) albedo.width, (float) albedo.height);
   ssms.set("time", Time.time * 0.00001);
 
+  filter.getDesaturate(comp.getBuffer(), 0.0);
   for (int i=0; i<2; i++) {
     ssms.set("blurDir", 1.0, 0.0);
     filter.getCustomFilter(filter.getBuffer(), ssms);
@@ -155,6 +198,9 @@ public void draw() {
   }
 
   image(filter.getBuffer(), 0, 0);
+  // blendMode(ADD);
+  // image(grFilter.getBuffer(), 0, 0 , width, height);
+  // blendMode(NORMAL);
   //image(albedo, 0, 0);
 
   //debug

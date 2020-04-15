@@ -52,7 +52,7 @@ void main(){
     vec3 fogColor = mix(fogMinColor, fogMaxColor, noised);
     //use this if you want to use a ramp instead of colors
     //vec3 scatteringSun = texture2D(ramp, vec2(pow(sunAmount, 25.0), 0.5)).rgb;
-    vec3 scatteringSun = mix(fogColor, sunColor, pow(sunAmount, 15.0));
+    vec3 scatteringSun = mix(fogColor, sunColor, pow(sunAmount, 8.0));
 
 
     vec3 finalColor;
