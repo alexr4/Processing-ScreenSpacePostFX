@@ -183,5 +183,5 @@ void main() {
     }
 
 
-  fragColor = vec4(normalize(ecVertex.rgb), 1.0);//texColor * (gl_FrontFacing ? AlbedoFront : AlbedoBack);
+  fragColor = vec4(finalColor, 1.0);//texColor * (gl_FrontFacing ? AlbedoFront : AlbedoBack);
 }

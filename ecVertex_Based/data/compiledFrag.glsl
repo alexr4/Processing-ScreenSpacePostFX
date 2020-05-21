@@ -149,5 +149,5 @@ void main() {
 
   vec2 uv = gl_FragCoord.xy/vec2(800) * 2.0 - 1.0;
   vec3 ecTest = vec3(uv, 0.0);
-  fragColor = vec4(ecVertex.xyz, 1.0);//texColor * (gl_FrontFacing ? AlbedoFront : AlbedoBack);//vec4(ecVertex.xyz, 1.0);//
+  fragColor = texColor * (gl_FrontFacing ? AlbedoFront : AlbedoBack);//vec4(ecVertex.xyz, 1.0);//vec4(ecVertex.xyz, 1.0);//
 }
