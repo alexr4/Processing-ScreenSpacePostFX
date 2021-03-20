@@ -9,3 +9,4 @@ application.macosx
 
 # Visual Studio cache directory
 .vs/
+.vscode/
